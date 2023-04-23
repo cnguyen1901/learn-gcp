@@ -27,15 +27,12 @@ resource "google_container_node_pool" "primary_nodes" {
       env = var.project_id
     }
 
+    service_account = google_service_account.cluster_serviceaccount.email
+
     machine_type = "n1-standard-1"
     tags         = ["gke-node", "${var.project_id}-gke"]
     metadata = {
       "disable-legacy-endpoints" = "true"
     }
   }
-}
-
-resource "google_service_account" "primary" {
-  account_id = "gitlab-gke-cluster"
-  display_name = "Service Account for Gitlab to authenticate with container registry and Kubernetes cluster"
 }

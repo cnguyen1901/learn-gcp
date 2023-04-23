@@ -6,8 +6,43 @@
 # Note that environment variables can be set in several places
 # See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 stages:
-- test
+  - test
+  - build-push
+  - deploy
 sast:
   stage: test
 include:
-- template: Security/SAST.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
+
+image: docker:19.03.12
+variables:
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_TLS_CERTDIR: ""
+  REGISTRY_HOSTNAME: gcr.io/sanmarino-382515
+  DOCKER_IMAGE_NAME: ${CI_PROJECT_NAME}
+services:
+  - docker:19.03.12-dind
+
+build-push:
+  stage: build-push
+  before_script:
+    - docker info
+    - echo "$SERVICE_ACCOUNT_KEY" > key.json
+    - docker login -u _json_key --password-stdin https://gcr.io < key.json
+  script:
+    - docker build --tag $REGISTRY_HOSTNAME/$DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
+    - docker push $REGISTRY_HOSTNAME/$DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+
+deploy:
+  stage: deploy
+  image: google/cloud-sdk
+  script:
+    # Authenticate with GKE
+    - echo "$SERVICE_ACCOUNT_KEY" > key.json
+    - gcloud auth activate-service-account --key-file=key.json
+    - gcloud config set project GCP_PROJECT_NAME
+    - gcloud config set container/cluster GKE_CLUSTER_NAME
+    - gcloud config set compute/zone asia-south1-c
+    - gcloud container clusters get-credentials GKE_CLUSTER_NAME --zone asia-south1-c --project GCP_PROJECT_NAME
+    - sed -i "s/<VERSION>/${CI_COMMIT_SHORT_SHA}/g" deployment.yaml
+    - kubectl apply -f deployment.yaml
