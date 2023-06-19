@@ -17,3 +17,8 @@ variable "gke_num_nodes" {
   default     = 2
   description = "number of gke nodes"
 }
+
+variable "env" {
+  type = string
+  description = "environment name"
+}

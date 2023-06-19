@@ -1,0 +1,2 @@
+bucket = "op-dashboard-390218-dev-tfstate"
+prefix = "terraform/state"
