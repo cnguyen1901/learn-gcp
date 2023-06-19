@@ -7,7 +7,9 @@ resource "google_storage_bucket" "state" {
   versioning {
     enabled = true
   }
+  uniform_bucket_level_access = true
 }
+
 
 terraform {
   backend "gcs" {}
@@ -19,4 +21,8 @@ terraform {
   }
 
   required_version = ">= 0.14"
+}
+
+provider "google" {
+  project = var.project_id
 }
