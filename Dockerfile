@@ -1,6 +1,12 @@
-FROM python:3.7-slim
-RUN pip install flask
+FROM python:3.9
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    default-libmysqlclient-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN pip install flask flask_sqlalchemy mysqlclient Flask_Migrate
 WORKDIR /app
-COPY api/app.py /app/app.py
-ENTRYPOINT ["python"]
-CMD ["/app/app.py"]
+COPY . .
+ENV PYTHONDONTWRITEBYTECODE=1
+EXPOSE 8080
+CMD ["python", "app.py"]
