@@ -23,26 +23,14 @@ variables:
 services:
   - docker:19.03.12-dind
 
-build-push:
-  stage: build-push
-  before_script:
-    - docker info
-    - echo "$SERVICE_ACCOUNT_KEY" > key.json
-    - docker login -u _json_key --password-stdin https://gcr.io < key.json
+test:
+  stage: test
+  # before_script:
+  #   - docker info
+  #   - echo "$SERVICE_ACCOUNT_KEY" > key.json
+  #   - docker login -u _json_key --password-stdin https://gcr.io < key.json
   script:
-    - docker build --tag $REGISTRY_HOSTNAME/$DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
-    - docker push $REGISTRY_HOSTNAME/$DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA
-
-deploy:
-  stage: deploy
-  image: google/cloud-sdk
-  script:
-    # Authenticate with GKE
-    - echo "$SERVICE_ACCOUNT_KEY" > key.json
-    - gcloud auth activate-service-account --key-file=key.json
-    - gcloud config set project sanmarino-382515
-    - gcloud config set container/cluster	sanmarino-382515-gke
-    - gcloud config set compute/zone us-central1-f
-    - gcloud container clusters get-credentials sanmarino-382515-gke --zone us-central1-f --project sanmarino-382515
-    - sed -i "s/<VERSION>/${CI_COMMIT_SHORT_SHA}/g" deployment.yaml
-    - kubectl apply -f deployment.yaml
+    - docker compose build
+    - docker compose up -d
+    - docker exec learn-gcp-shell-1 bash -c "pytest"
+    # - docker push $REGISTRY_HOSTNAME/$DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA

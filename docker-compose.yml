@@ -16,6 +16,10 @@ services:
     ports:
       - "8080:8080"
   
+  shell:
+    <<: *base-web
+    command: ["tail", "-f", "/dev/null"]
+  
   migrations:
     <<: *base-web
     command: ["./wait-for-it.sh", "db:3306", "--", "flask", "db", "upgrade"]

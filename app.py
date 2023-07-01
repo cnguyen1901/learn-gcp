@@ -29,6 +29,7 @@ def get_users():
 @app.route("/users", methods=["POST"])
 def create_user():
     name = request.json["name"]
+    print(name)
     user = Customer(name)
     db.session.add(user)
     db.session.commit()
